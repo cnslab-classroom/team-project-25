@@ -2,6 +2,7 @@
 
 import java.awt.*;
 import java.util.Date;
+import java.util.Map;
 import javax.swing.*;
 
 public class FinancialManagementGUI {
@@ -12,9 +13,9 @@ public class FinancialManagementGUI {
 
     public FinancialManagementGUI() {
         // 초기화
-        accountManager = new AccountManager();
-        transactionManager = new TransactionManager();
         transactionHistory = new TransactionHistory();
+        accountManager = new AccountManager(transactionHistory);
+        transactionManager = new TransactionManager();
 
         // GUI 구성
         frame = new JFrame("Financial Management System");
@@ -117,28 +118,41 @@ public class FinancialManagementGUI {
 
     private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-    
+
         JTextArea historyArea = new JTextArea();
         historyArea.setEditable(false);
-    
+
         JButton refreshButton = new JButton("내역 갱신");
         panel.add(new JScrollPane(historyArea), BorderLayout.CENTER);
         panel.add(refreshButton, BorderLayout.SOUTH);
-    
+
         refreshButton.addActionListener(e -> {
             StringBuilder sb = new StringBuilder();
+
+            // 각 계좌의 현재 잔액과 거래 내역 추가
+            sb.append("==== 계좌 정보 ====\n");
+            for (Map.Entry<String, Account> entry : accountManager.getAllAccounts().entrySet()) {
+                Account account = entry.getValue();
+                sb.append("계좌 ID: ").append(account.getAccountId())
+                .append(", 소유자: ").append(account.getOwner())
+                .append(", 잔액: ").append(account.getBalance()).append("원\n");
+            }
+
+            sb.append("\n==== 거래 내역 ====\n");
             for (Transaction transaction : transactionHistory.getAllTransactions()) {
                 sb.append(transaction.getType()).append(" - ")
-                        .append(transaction.getAccountId()).append(" - ")
-                        .append(transaction.getAmount()).append("원 - ")
-                        .append(transaction.getDate()).append("\n");
+                .append(transaction.getAccountId()).append(" - ")
+                .append(transaction.getAmount()).append("원 - ")
+                .append(transaction.getDate()).append("\n");
             }
-            if (sb.length() == 0) {
+
+            if (transactionHistory.getAllTransactions().isEmpty()) {
                 sb.append("거래 내역이 없습니다.");
             }
+
             historyArea.setText(sb.toString());
         });
-    
+
         return panel;
     }    
 

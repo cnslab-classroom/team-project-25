@@ -4,12 +4,18 @@ import java.util.*;
 
 public class AccountManager {
     private Map<String, Account> accounts = new HashMap<>();
+    private TransactionHistory transactionHistory;
+
+    public AccountManager(TransactionHistory transactionHistory) {
+        this.transactionHistory = transactionHistory;
+    }
 
     public void createAccount(String accountId, String accountPassword, String owner, double initialBalance) { 
         if (accounts.containsKey(accountId)) {
             throw new IllegalArgumentException("Account already exists.");
         }
         accounts.put(accountId, new Account(accountId, accountPassword, owner, initialBalance));
+        transactionHistory.logTransaction("입금", accountId, initialBalance, new Date());
         System.out.println("Account created successfully.");
     }
 
@@ -32,10 +38,8 @@ public class AccountManager {
     public Account getAccount(String accountId) {
         return accounts.get(accountId);
     }
-    
-    
+
+    public Map<String, Account> getAllAccounts() {
+        return accounts;
+    }
 }
-
-
-
-
