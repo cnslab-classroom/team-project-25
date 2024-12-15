@@ -40,6 +40,7 @@ public class FinancialManagementGUI {
         JTextField ownerField = new JTextField();
         JTextField balanceField = new JTextField();
         JButton createButton = new JButton("계좌 생성");
+        JButton clearButton = new JButton("CLEAR");
 
         panel.add(new JLabel("계좌 ID:"));
         panel.add(accountIdField);
@@ -50,6 +51,7 @@ public class FinancialManagementGUI {
         panel.add(new JLabel("초기 잔액:"));
         panel.add(balanceField);
         panel.add(createButton);
+        panel.add(clearButton);
 
         createButton.addActionListener(e -> {
             try {
@@ -64,7 +66,15 @@ public class FinancialManagementGUI {
             }
         });
 
+        clearButton.addActionListener(e -> {
+            accountIdField.setText("");
+            accountPasswordField.setText("");
+            ownerField.setText("");
+            balanceField.setText("");
+        });
+
         return panel;
+
     }
 
     private JPanel createTransactionPanel() {
@@ -77,6 +87,7 @@ public class FinancialManagementGUI {
     JButton depositButton = new JButton("입금");
     JButton withdrawButton = new JButton("출금");
     JButton transferButton = new JButton("송금");  // 송금 버튼 추가
+    JButton clearButton = new JButton("CLEAR");
 
     panel.add(new JLabel("계좌 ID:"));
     panel.add(accountIdField);
@@ -89,6 +100,7 @@ public class FinancialManagementGUI {
     panel.add(new JLabel("송금할 계좌 ID:"));  // 송금할 계좌 ID 라벨 추가
     panel.add(transferAccountIdField);
     panel.add(transferButton); // 송금 버튼 추가
+    panel.add(clearButton);
 
     depositButton.addActionListener(e -> {
         try {
@@ -133,6 +145,13 @@ public class FinancialManagementGUI {
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
         }
+    });
+
+    clearButton.addActionListener(e -> {
+        accountIdField.setText("");
+        accountPasswordField.setText("");
+        amountField.setText("");
+        transferAccountIdField.setText("");
     });
 
     return panel;
