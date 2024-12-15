@@ -1,20 +1,15 @@
 // 프로그램의 그래픽 사용자 인터페이스(GUI)를 제공하며, 사용자가 계좌 관리 및 거래를 수행할 수 있는 화면
 
 import java.awt.*;
-import java.util.Date;
 import javax.swing.*;
 
 public class FinancialManagementGUI {
     private JFrame frame;
-    private AccountManager accountManager;
-    private TransactionManager transactionManager;
-    private TransactionHistory transactionHistory;
+    private NetworkClient networkClient;
 
-    public FinancialManagementGUI() {
+    public FinancialManagementGUI(String host, int port) {
         // 초기화
-        transactionHistory = new TransactionHistory();
-        accountManager = new AccountManager(transactionHistory);
-        transactionManager = new TransactionManager(transactionHistory);
+        networkClient = new NetworkClient(host, port);
 
         // GUI 구성
         frame = new JFrame("Financial Management System");
@@ -58,8 +53,14 @@ public class FinancialManagementGUI {
                 String accountPassword = accountPasswordField.getText();
                 String owner = ownerField.getText();
                 double balance = Double.parseDouble(balanceField.getText());
-                accountManager.createAccount(accountId,accountPassword, owner, balance);
-                JOptionPane.showMessageDialog(frame, "계좌가 생성되었습니다!");
+
+                String request = "CREATE|" + accountId + "|" + accountPassword + "|" + owner + "|" + balance;
+                String response = networkClient.sendRequest(request);
+                if (response.startsWith("OK")) {
+                    JOptionPane.showMessageDialog(frame, "계좌가 생성되었습니다!");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "오류: " + response);
+                }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
             }
@@ -101,27 +102,33 @@ public class FinancialManagementGUI {
         panel.add(clearButton);
 
         depositButton.addActionListener(e -> {
+            String accountId = accountIdField.getText();
             try {
-                String accountId = accountIdField.getText();
                 double amount = Double.parseDouble(amountField.getText());
-                Account account = accountManager.getAccount(accountId);
-                transactionManager.deposit(account, amount);
-                transactionHistory.logTransaction("입금", accountId, amount, new Date());
-                JOptionPane.showMessageDialog(frame, "입금 완료!");
+                String req = "DEPOSIT|" + accountId + "|" + amount;
+                String res = networkClient.sendRequest(req);
+                if (res.startsWith("OK")) {
+                    JOptionPane.showMessageDialog(frame, "입금 완료!");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "오류: " + res);
+                }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
             }
         });
 
         withdrawButton.addActionListener(e -> {
+            String accountId = accountIdField.getText();
+            String password = accountPasswordField.getText();
             try {
-                String accountId = accountIdField.getText();
-                String accountPassword = accountPasswordField.getText();
                 double amount = Double.parseDouble(amountField.getText());
-                Account account = accountManager.getAccount(accountId);
-                transactionManager.withdraw(account, accountPassword, amount);
-                transactionHistory.logTransaction("출금", accountId, amount, new Date());
-                JOptionPane.showMessageDialog(frame, "출금 완료!");
+                String req = "WITHDRAW|" + accountId + "|" + password + "|" + amount;
+                String res = networkClient.sendRequest(req);
+                if (res.startsWith("OK")) {
+                    JOptionPane.showMessageDialog(frame, "출금 완료!");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "오류: " + res);
+                }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
             }
@@ -129,18 +136,18 @@ public class FinancialManagementGUI {
 
         // 송금 버튼 클릭 시 처리
         transferButton.addActionListener(e -> {
+            String accountId = accountIdField.getText();
+            String password = accountPasswordField.getText();
+            String toId = transferAccountIdField.getText();
             try {
-                String accountId = accountIdField.getText();
-                String accountPassword = accountPasswordField.getText();
-                String transferAccountId = transferAccountIdField.getText();  // 송금할 계좌 ID
                 double amount = Double.parseDouble(amountField.getText());
-                Account fromAccount = accountManager.getAccount(accountId);
-                Account toAccount = accountManager.getAccount(transferAccountId);
-
-                // 송금 처리
-                transactionManager.transfer(fromAccount, toAccount, accountPassword, amount);
-                // transactionHistory.logTransaction("송금", accountId, amount, new Date());
-                JOptionPane.showMessageDialog(frame, "송금 완료!");
+                String req = "TRANSFER|" + accountId + "|" + password + "|" + toId + "|" + amount;
+                String res = networkClient.sendRequest(req);
+                if (res.startsWith("OK")) {
+                    JOptionPane.showMessageDialog(frame, "송금 완료!");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "오류: " + res);
+                }
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
             }
@@ -174,51 +181,19 @@ public class FinancialManagementGUI {
     
         panel.add(inputPanel, BorderLayout.NORTH);
     
-        // 거래 내역 출력 필드
         JTextArea historyArea = new JTextArea();
         historyArea.setEditable(false);
         panel.add(new JScrollPane(historyArea), BorderLayout.CENTER);
-    
-        // 조회 버튼 클릭 이벤트
+
         searchButton.addActionListener(e -> {
             String accountId = accountIdField.getText();
-            String accountPassword = new String(accountPasswordField.getPassword());
-    
-            try {
-                // 계좌 정보 확인
-                Account account = accountManager.getAccount(accountId);
-                if (account == null) {
-                    throw new IllegalArgumentException("해당 계좌가 존재하지 않습니다.");
-                }
-                if (!account.getAccountPassword().equals(accountPassword)) {
-                    throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
-                }
-    
-                // 거래 내역 및 잔액 표시
-                StringBuilder sb = new StringBuilder();
-                sb.append("==== 계좌 정보 ====\n")
-                  .append("계좌 ID: ").append(account.getAccountId()).append("\n")
-                  .append("소유자: ").append(account.getOwner()).append("\n")
-                  .append("잔액: ").append(account.getBalance()).append("원\n\n");
-    
-                sb.append("==== 거래 내역 ====\n");
-                boolean hasTransactions = false;
-                for (Transaction transaction : transactionHistory.getAllTransactions()) {
-                    if (transaction.getAccountId().equals(accountId)) {
-                        sb.append(transaction.getType()).append(" - ")
-                          .append(transaction.getAmount()).append("원 - ")
-                          .append(transaction.getDate()).append("\n");
-                        hasTransactions = true;
-                    }
-                }
-    
-                if (!hasTransactions) {
-                    sb.append("거래 내역이 없습니다.");
-                }
-    
-                historyArea.setText(sb.toString());
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
+            String password = new String(accountPasswordField.getPassword());
+            String req = "GET_HISTORY|" + accountId + "|" + password;
+            String res = networkClient.sendRequest(req);
+            if (res.startsWith("OK:HISTORY")) {
+                historyArea.setText(res.substring(res.indexOf("\n")+1));
+            } else {
+                JOptionPane.showMessageDialog(frame, "오류: " + res);
             }
         });
     
@@ -227,10 +202,5 @@ public class FinancialManagementGUI {
 
     public void show() {
         frame.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        FinancialManagementGUI gui = new FinancialManagementGUI();
-        gui.show();
     }
 }
