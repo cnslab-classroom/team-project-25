@@ -16,7 +16,7 @@ public class FinancialManagementSystem {
         Account acc2 = accountManager.getAccount("456");
 
         transactionManager.deposit(acc1, 1000);
-        transactionManager.withdraw(acc1, 500);
+        transactionManager.withdraw(acc1,"password123", 500);
 
         transactionHistory.logTransaction("Deposit", "123", 1000, new Date());
         transactionHistory.logTransaction("Withdrawal", "123", 500, new Date());

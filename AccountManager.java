@@ -6,6 +6,10 @@ public class AccountManager {
     private Map<String, Account> accounts = new HashMap<>();
     private TransactionHistory transactionHistory;
 
+    public AccountManager() {
+        this.transactionHistory = new TransactionHistory();
+    }
+
     public AccountManager(TransactionHistory transactionHistory) {
         this.transactionHistory = transactionHistory;
     }
