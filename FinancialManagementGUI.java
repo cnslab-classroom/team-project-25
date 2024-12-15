@@ -68,52 +68,76 @@ public class FinancialManagementGUI {
     }
 
     private JPanel createTransactionPanel() {
-        JPanel panel = new JPanel(new GridLayout(6, 1));
+        JPanel panel = new JPanel(new GridLayout(8, 1)); // 송금 버튼을 위한 추가 행을 추가합니다.
 
-        JTextField accountIdField = new JTextField();
-        JTextField accountPasswordField = new JTextField();
-        JTextField amountField = new JTextField();
-        JButton depositButton = new JButton("입금");
-        JButton withdrawButton = new JButton("출금");
+    JTextField accountIdField = new JTextField();
+    JTextField accountPasswordField = new JTextField();
+    JTextField amountField = new JTextField();
+    JTextField transferAccountIdField = new JTextField(); // 송금할 계좌 ID 입력 필드 추가
+    JButton depositButton = new JButton("입금");
+    JButton withdrawButton = new JButton("출금");
+    JButton transferButton = new JButton("송금");  // 송금 버튼 추가
 
-        panel.add(new JLabel("계좌 ID:"));
-        panel.add(accountIdField);
-        panel.add(new JLabel("계좌 Password:"));
-        panel.add(accountPasswordField);
-        panel.add(new JLabel("금액:"));
-        panel.add(amountField);
-        panel.add(depositButton);
-        panel.add(withdrawButton);
+    panel.add(new JLabel("계좌 ID:"));
+    panel.add(accountIdField);
+    panel.add(new JLabel("계좌 Password:"));
+    panel.add(accountPasswordField);
+    panel.add(new JLabel("금액:"));
+    panel.add(amountField);
+    panel.add(depositButton);
+    panel.add(withdrawButton);
+    panel.add(new JLabel("송금할 계좌 ID:"));  // 송금할 계좌 ID 라벨 추가
+    panel.add(transferAccountIdField);
+    panel.add(transferButton); // 송금 버튼 추가
 
-        depositButton.addActionListener(e -> {
-            try {
-                String accountId = accountIdField.getText();
-                //String accountPassword = accountPasswordField.getText();
-                double amount = Double.parseDouble(amountField.getText());
-                Account account = accountManager.getAccount(accountId);
-                transactionManager.deposit(account, amount);
-                transactionHistory.logTransaction("입금", accountId, amount, new Date());
-                JOptionPane.showMessageDialog(frame, "입금 완료!");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
-            }
-        });
+    depositButton.addActionListener(e -> {
+        try {
+            String accountId = accountIdField.getText();
+            double amount = Double.parseDouble(amountField.getText());
+            Account account = accountManager.getAccount(accountId);
+            transactionManager.deposit(account, amount);
+            transactionHistory.logTransaction("입금", accountId, amount, new Date());
+            JOptionPane.showMessageDialog(frame, "입금 완료!");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
+        }
+    });
 
-        withdrawButton.addActionListener(e -> {
-            try {
-                String accountId = accountIdField.getText();
-                String accountPassword = accountPasswordField.getText();
-                double amount = Double.parseDouble(amountField.getText());
-                Account account = accountManager.getAccount(accountId);
-                transactionManager.withdraw(account,accountPassword, amount);
-                transactionHistory.logTransaction("출금", accountId, amount, new Date());
-                JOptionPane.showMessageDialog(frame, "출금 완료!");
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
-            }
-        });
+    withdrawButton.addActionListener(e -> {
+        try {
+            String accountId = accountIdField.getText();
+            String accountPassword = accountPasswordField.getText();
+            double amount = Double.parseDouble(amountField.getText());
+            Account account = accountManager.getAccount(accountId);
+            transactionManager.withdraw(account, accountPassword, amount);
+            transactionHistory.logTransaction("출금", accountId, amount, new Date());
+            JOptionPane.showMessageDialog(frame, "출금 완료!");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
+        }
+    });
 
-        return panel;
+    // 송금 버튼 클릭 시 처리
+    transferButton.addActionListener(e -> {
+        try {
+            String accountId = accountIdField.getText();
+            String transferAccountId = transferAccountIdField.getText();  // 송금할 계좌 ID
+            double amount = Double.parseDouble(amountField.getText());
+            Account fromAccount = accountManager.getAccount(accountId);
+            Account toAccount = accountManager.getAccount(transferAccountId);
+
+            // 송금 처리
+            transactionManager.transfer(fromAccount, toAccount, amount);
+            transactionHistory.logTransaction("송금", accountId, amount, new Date());
+            JOptionPane.showMessageDialog(frame, "송금 완료!");
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(frame, "오류: " + ex.getMessage());
+        }
+    });
+
+    return panel;
+
+    
     }
 
     private JPanel createHistoryPanel() {
@@ -155,6 +179,11 @@ public class FinancialManagementGUI {
 
         return panel;
     }    
+
+
+    
+
+
 
     public void show() {
         frame.setVisible(true);
